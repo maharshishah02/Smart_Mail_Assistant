@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Email Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for a polished look and Inter font */
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for better scrolling on small screens */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in element's total width and height */
+        }
+        .container {
+            background-color: #ffffff; /* White background for the card */
+            border-radius: 20px; /* Rounded corners for the container */
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            padding: 40px;
+            max-width: 900px; /* Max width for larger screens */
+            width: 100%; /* Full width on smaller screens */
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Space between sections */
+            margin-top: 30px; /* Add some margin from the top */
+            margin-bottom: 30px; /* Add some margin at the bottom */
+        }
+        textarea, input[type="text"] {
+            resize: vertical; /* Allow vertical resizing */
+            min-height: 120px; /* Minimum height for text areas */
+            max-height: 400px; /* Maximum height to prevent excessively tall text areas */
+            padding: 12px;
+            border-radius: 10px; /* Rounded corners for text areas */
+            border: 1px solid #e2e8f0; /* Light gray border */
+            font-size: 1rem;
+            line-height: 1.5;
+            transition: border-color 0.2s; /* Smooth transition for focus effect */
+        }
+        input[type="text"] {
+            min-height: auto;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #6366f1; /* Indigo-500 on focus */
+        }
+        .button-group {
+            display: flex;
+            gap: 15px; /* Space between buttons */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            justify-content: center; /* Center buttons horizontally */
+        }
+        .btn {
+            padding: 12px 25px;
+            border-radius: 10px; /* Rounded corners for buttons */
+            font-weight: 600; /* Semi-bold text */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out; /* Smooth transition for hover effects */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* Space for loader/icon if added */
+            flex-grow: 1; /* Allow buttons to grow to fill space */
+            max-width: 200px; /* Max width for individual buttons */
+        }
+        .btn-primary {
+            background-color: #6366f1; /* Indigo-500 primary color */
+            color: #ffffff; /* White text */
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); /* Soft shadow for primary button */
+        }
+        .btn-primary:hover:not(:disabled) {
+            background-color: #4f46e5; /* Darker indigo on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4); /* Enhanced shadow */
+        }
+        .btn-secondary {
+            background-color: #e0e7ff; /* Light indigo background */
+            color: #4f46e5; /* Darker indigo text */
+            border: 1px solid #c7d2fe; /* Indigo-200 border */
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background-color: #c7d2fe; /* Slightly darker light indigo on hover */
+            transform: translateY(-2px); /* Slight lift effect */
+        }
+        .btn-danger {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background-color: #fecaca;
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.6; /* Dim disabled buttons */
+            cursor: not-allowed;
+        }
+        .radio-group {
+            display: flex;
+            gap: 25px; font-size: 1rem; font-weight: 500; color: #4a5568; justify-content: center;
+        }
+        .radio-group input[type="radio"] {
+            appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid #a78bfa;
+            border-radius: 50%; margin-right: 8px; cursor: pointer; position: relative; top: 4px; outline: none;
+            transition: all 0.2s ease-in-out;
+        }
+        .radio-group input[type="radio"]:checked {
+            background-color: #6366f1; border-color: #6366f1; box-shadow: 0 0 0 4px #e0e7ff;
+        }
+        select {
+            padding: 10px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 1rem;
+            background-color: #fff; min-width: 180px; transition: border-color 0.2s;
+        }
+        select:focus { outline: none; border-color: #6366f1; }
+        .loader {
+            border: 4px solid #f3f3f3; border-top: 4px solid #6366f1; border-radius: 50%;
+            width: 24px; height: 24px; animation: spin 1s linear infinite; margin-left: 10px; display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media (max-width: 640px) {
+            .container { padding: 25px; gap: 20px; }
+            .button-group, .output-actions { flex-direction: column; gap: 10px; }
+            .btn { width: 100%; max-width: none; }
+            .controls-container { flex-direction: column; align-items: center; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-gray-800 text-center">Smart Email Assistant</h1>
+
+        <div class="input-section">
+            <label for="emailInput" class="block text-lg font-semibold text-gray-700 mb-2">Your Email Draft / Prompt:</label>
+            <textarea id="emailInput" placeholder="Start writing your email here, or paste a draft to refine..." class="w-full"></textarea>
+            <div id="inputCounts" class="text-sm text-gray-500 text-right mt-1">0 words / 0 characters</div>
+
+            <div class="mt-4">
+                <label for="keywordsInput" class="block text-sm font-medium text-gray-700 mb-1">Keywords to Include (optional, comma-separated):</label>
+                <input type="text" id="keywordsInput" placeholder="e.g., project management, agile, data analysis" class="w-full">
+            </div>
+
+            <div class="mt-4">
+                <label for="documentUpload" class="block text-sm font-medium text-gray-700 mb-1">Add Document Context (Resume, Transcript, etc.):</label>
+                <input type="file" id="documentUpload" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100">
+                <span id="file-chosen" class="text-sm text-gray-500 italic">No file chosen</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between mt-6 gap-4 controls-container">
+                <div class="flex items-center gap-4">
+                    <div class="radio-group">
+                        <label><input type="radio" name="tone" value="Formal" checked> Formal</label>
+                        <label><input type="radio" name="tone" value="Informal"> Informal</label>
+                    </div>
+                    <div>
+                        <select id="styleSelector" name="style">
+                            <option value="Default">Default Style</option>
+                            <option value="Concise">Concise</option>
+                            <option value="Persuasive">Persuasive</option>
+                            <option value="Confident">Confident</option>
+                            <option value="Friendly & Professional">Friendly & Professional</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button id="completeBtn" class="btn btn-primary">Complete <div id="completeLoader" class="loader"></div></button>
+                    <button id="refineBtn" class="btn btn-secondary">Refine <div id="refineLoader" class="loader"></div></button>
+                    <button id="summarizeBtn" class="btn btn-secondary">Summarize <div id="summarizeLoader" class="loader"></div></button>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <label for="emailOutput" class="block text-lg font-semibold text-gray-700 mb-2">Generated / Refined Email:</label>
+            <textarea id="emailOutput" placeholder="Your generated or refined email will appear here." class="w-full" readonly></textarea>
+            <div id="outputCounts" class="text-sm text-gray-500 text-right mt-1">0 words / 0 characters</div>
+            <div class="flex gap-4 mt-4 justify-center output-actions">
+                <button id="copyBtn" class="btn btn-secondary">Copy to Clipboard</button>
+                <button id="clearBtn" class="btn btn-danger">Clear All</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const BACKEND_URL = 'http://127.0.0.1:5000'; 
+        const emailInput = document.getElementById('emailInput');
+        const keywordsInput = document.getElementById('keywordsInput');
+        const documentUpload = document.getElementById('documentUpload');
+        const fileChosen = document.getElementById('file-chosen');
+        const completeBtn = document.getElementById('completeBtn');
+        const refineBtn = document.getElementById('refineBtn');
+        const summarizeBtn = document.getElementById('summarizeBtn');
+        const emailOutput = document.getElementById('emailOutput');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const completeLoader = document.getElementById('completeLoader');
+        const refineLoader = document.getElementById('refineLoader');
+        const summarizeLoader = document.getElementById('summarizeLoader');
+        const styleSelector = document.getElementById('styleSelector');
+        const inputCounts = document.getElementById('inputCounts');
+        const outputCounts = document.getElementById('outputCounts');
+        
+        let documentTextContent = '';
+
+        function getSelectedTone() { return document.querySelector('input[name="tone"]:checked').value; }
+        function getSelectedStyle() { return styleSelector.value; }
+
+        function setProcessing(isProcessing, loaderElement) {
+            completeBtn.disabled = isProcessing;
+            refineBtn.disabled = isProcessing;
+            summarizeBtn.disabled = isProcessing;
+            completeLoader.style.display = 'none';
+            refineLoader.style.display = 'none';
+            summarizeLoader.style.display = 'none';
+            if (isProcessing && loaderElement) {
+                loaderElement.style.display = 'inline-block';
+            }
+        }
+        
+        function updateCounts(textarea, displayElement) {
+            const text = textarea.value;
+            const charCount = text.length;
+            const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            displayElement.textContent = `${wordCount} words / ${charCount} characters`;
+        }
+
+        async function callBackendAPI(endpoint, payload, loaderElement) {
+            setProcessing(true, loaderElement);
+            emailOutput.value = 'Connecting to backend... Generating... Please wait.';
+            updateCounts(emailOutput, outputCounts);
+
+            try {
+                const response = await fetch(`${BACKEND_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    emailOutput.value = `Error from backend: ${errorData.error || response.statusText}`;
+                    return;
+                }
+
+                const result = await response.json();
+                if (result.generated_text) {
+                    emailOutput.value = result.generated_text;
+                } else if (result.error) {
+                    emailOutput.value = `Error from AI: ${result.error}`;
+                } else {
+                    emailOutput.value = 'Error: Unexpected response structure from backend.';
+                }
+            } catch (error) {
+                emailOutput.value = 'Error: Failed to connect to the backend server. Make sure your Python Flask app is running at ' + BACKEND_URL;
+            } finally {
+                setProcessing(false, null);
+                updateCounts(emailOutput, outputCounts);
+            }
+        }
+        
+        documentUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                fileChosen.textContent = 'No file chosen';
+                documentTextContent = '';
+                return;
+            }
+            fileChosen.textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                documentTextContent = event.target.result;
+            };
+            reader.onerror = () => {
+                fileChosen.textContent = 'Error reading file';
+                documentTextContent = '';
+            };
+            reader.readAsText(file);
+        });
+
+        completeBtn.addEventListener('click', async () => {
+            const userText = emailInput.value.trim();
+            if (!userText) { emailOutput.value = 'Please enter text to complete.'; return; }
+            const payload = {
+                email_text: userText,
+                tone: getSelectedTone(),
+                style: getSelectedStyle(),
+                keywords: keywordsInput.value.trim(),
+                document_text: documentTextContent
+            };
+            await callBackendAPI('/complete_email', payload, completeLoader);
+        });
+
+        refineBtn.addEventListener('click', async () => {
+            const userText = emailInput.value.trim();
+            if (!userText) { emailOutput.value = 'Please enter text to refine.'; return; }
+            const payload = {
+                email_text: userText,
+                tone: getSelectedTone(),
+                style: getSelectedStyle(),
+                keywords: keywordsInput.value.trim(),
+                document_text: documentTextContent
+            };
+            await callBackendAPI('/refine_email', payload, refineLoader);
+        });
+        
+        summarizeBtn.addEventListener('click', async () => {
+            const userText = emailInput.value.trim() || documentTextContent.trim();
+            if (!userText) { emailOutput.value = 'Please enter text or upload a document to summarize.'; return; }
+            const payload = { email_text: userText };
+            await callBackendAPI('/summarize_email', payload, summarizeLoader);
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if (!emailOutput.value) return;
+            navigator.clipboard.writeText(emailOutput.value).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy to Clipboard'; }, 2000);
+            });
+        });
+
+        clearBtn.addEventListener('click', () => {
+            emailInput.value = '';
+            emailOutput.value = '';
+            keywordsInput.value = '';
+            documentUpload.value = ''; // Reset file input
+            fileChosen.textContent = 'No file chosen';
+            documentTextContent = '';
+            updateCounts(emailInput, inputCounts);
+            updateCounts(emailOutput, outputCounts);
+        });
+
+        emailInput.addEventListener('input', () => updateCounts(emailInput, inputCounts));
+        updateCounts(emailInput, inputCounts);
+        updateCounts(emailOutput, outputCounts);
+    </script>
+</body>
+</html>
