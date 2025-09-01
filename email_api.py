@@ -8,7 +8,7 @@ CORS(app)
 
 # --- IMPORTANT FOR LOCAL EXECUTION ---
 # You MUST replace "" with your actual Gemini API Key here for the backend to work.
-API_KEY = "AIzaSyCmB24WXjbiqREBuOjCq5MFgtsaTF9zEIg"
+API_KEY = "Replace with your API Key"
 
 def call_gemini_api(prompt: str) -> dict:
     """
